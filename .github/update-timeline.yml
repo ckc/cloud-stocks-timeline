@@ -1,0 +1,40 @@
+name: Update Stock Timeline
+
+on:
+  schedule:
+    # 每天紐約時間 23:00 左右跑一次（自行調整）
+    - cron: "0 3 * * *"
+  workflow_dispatch: {}
+
+jobs:
+  build-and-commit:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install --no-cache-dir -r requirements.txt
+
+      - name: Run timeline script
+        run: |
+          python build_stocks_timeline.py
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if [ -n "$(git status --porcelain)" ]; then
+            git add stocks_timeline.html
+            git commit -m "chore: auto-update timeline"
+            git push
+          else
+            echo "No changes to commit"
+          fi
